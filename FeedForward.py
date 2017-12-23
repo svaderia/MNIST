@@ -21,8 +21,8 @@ class FeedForwardNetwork:
 
     def _create_placeholders(self):
         with tf.name_scope("data"):
-            self.x = tf.placeholder('float', shape=[None, self.layers[0]])
-            self.y = tf.placeholder('float')
+            self.x = tf.placeholder(tf.float32, shape=[None, self.layers[0]])
+            self.y = tf.placeholder(tf.float32)
     
     def _create_weights(self):
         with tf.name_scope("weights"):
@@ -57,8 +57,9 @@ class FeedForwardNetwork:
 
     def _create_summaries(self):
         with tf.name_scope("summaries"):
-            tf.summary.scalar("loss", self.loss)
-            tf.summary.histogram("histogram loss", self.loss)
+            self.ep_loss = tf.placeholder(tf.float32)
+            tf.summary.scalar("loss", self.ep_loss)
+            tf.summary.histogram("histogram loss", self.ep_loss)
             tf.summary.scalar("accuracy", self.accuracy)
             tf.summary.histogram("histogram accuracy", self.accuracy)
             self.summary_op = tf.summary.merge_all()
@@ -82,9 +83,10 @@ def train_model(model, data, epochs):
             epoch_loss = 0
             for index in range(n_batch):
                 batch_x, batch_y = data.train.next_batch(model.batch_size)
-                _ , loss, summary = sess.run([model.optimizer, model.loss, model.summary_op], feed_dict = {model.x: batch_x, model.y: batch_y}) 
+                _ , loss = sess.run([model.optimizer, model.loss], feed_dict = {model.x: batch_x, model.y: batch_y}) 
                 epoch_loss += loss
-                writer.add_summary(summary)
+            summary = sess.run(model.summary_op, feed_dict={model.ep_loss: epoch_loss, model.x : data.test.images, model.y: data.test.labels})
+            writer.add_summary(summary, epoch )
             print('Epoch', epoch+1, 'completed out of', epochs, 'loss:', epoch_loss)
             print('Epoch' , epoch+1, 'Accuracy:', model.accuracy.eval({model.x: data.test.images, model.y: data.test.labels}))
 
@@ -96,6 +98,7 @@ def main():
     model = FeedForwardNetwork(layers, lr, batch_size)
     model.build_graph()
     train_model(model, mnist, epochs)
+    print("Run `tensorboard --logdir='improved_graph/' to see the summary")
 
 if __name__ == "__main__":
     main()
