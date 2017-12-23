@@ -92,9 +92,9 @@ def train_model(model, data, epochs):
 
 def main():
     layers = [784, 500, 500, 10]
-    epochs = 10
-    batch_size = 16
-    lr = 0.0001
+    epochs = 25
+    batch_size = 100
+    lr = 0.01
     model = FeedForwardNetwork(layers, lr, batch_size)
     model.build_graph()
     train_model(model, mnist, epochs)
